@@ -7,7 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Field, inputClass } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/button";
 import { IconAlertTriangle, IconSpinner } from "@/components/icons";
-import { createProperty, idlePropertyState } from "../actions";
+import { createProperty, type PropertyFormState } from "../actions";
+
+const idlePropertyState: PropertyFormState = { status: "idle" };
 
 function ProcessingNotice() {
   const { pending } = useFormStatus();

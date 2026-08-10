@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LayoutDiagram } from "@/components/layout-diagram";
 import { Card, CardHeader } from "@/components/ui/card";
+import { isDemoMode } from "@/lib/demo/mode";
 
 export default async function SharedProposalPage({
   params,
@@ -23,6 +24,11 @@ export default async function SharedProposalPage({
 
   return (
     <div className="min-h-screen bg-stone-50 px-4 py-10">
+      {isDemoMode() && (
+        <div className="fixed inset-x-0 top-0 bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-white">
+          デモモード — ダミーデータで表示しています
+        </div>
+      )}
       <div className="mx-auto max-w-3xl space-y-6">
         <div className="text-center">
           <p className="text-xs font-medium uppercase tracking-wide text-teal-700">

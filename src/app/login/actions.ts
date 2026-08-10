@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isDemoMode } from "@/lib/demo/mode";
 
 export type AuthFormState = { error: string | null };
 
@@ -27,6 +28,11 @@ export async function login(
 }
 
 export async function logout() {
+  if (isDemoMode()) {
+    // No real session to end in demo mode — proxy.ts leaves every route open.
+    redirect("/dashboard");
+  }
+
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");

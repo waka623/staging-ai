@@ -5,14 +5,15 @@ import { redirect } from "next/navigation";
 import { requireCurrentCompany } from "@/lib/auth/current-company";
 import { createClient } from "@/lib/supabase/server";
 import { uploadPropertyMedia } from "@/lib/supabase/storage";
-import { analyzeProperty, type ImageInput } from "@/lib/ai/analyze-property";
+import { analyzeProperty, type AnalyzeResult, type ImageInput } from "@/lib/ai/analyze-property";
+import { isDemoMode } from "@/lib/demo/mode";
+import { synthesizeProposals } from "@/lib/demo/synthesize";
 import type { ActionState } from "@/lib/action-state";
 import { asAllowedImageType, extensionFor } from "./media";
 
 const MAX_PHOTOS = 8;
 
 export type PropertyFormState = { status: "idle" | "error"; message?: string };
-const idlePropertyState: PropertyFormState = { status: "idle" };
 
 async function fileToImageInput(file: File): Promise<{ input: ImageInput; bytes: Uint8Array }> {
   const type = asAllowedImageType(file.type);
@@ -22,6 +23,29 @@ async function fileToImageInput(file: File): Promise<{ input: ImageInput; bytes:
   const bytes = new Uint8Array(await file.arrayBuffer());
   const base64 = Buffer.from(bytes).toString("base64");
   return { input: { base64, mediaType: type }, bytes };
+}
+
+/**
+ * Runs the AI layout analysis, or — in demo mode — a synthetic stand-in so
+ * the flow can be exercised without a real Anthropic API key. The short
+ * delay keeps the "AI解析中" pending state visibly meaningful.
+ */
+async function runAnalysis(input: {
+  propertyName: string;
+  memo: string | null;
+  floorPlan?: ImageInput;
+  photos?: ImageInput[];
+}): Promise<AnalyzeResult> {
+  if (isDemoMode()) {
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    return synthesizeProposals();
+  }
+  return analyzeProperty({
+    propertyName: input.propertyName,
+    memo: input.memo,
+    floorPlan: input.floorPlan!,
+    photos: input.photos!,
+  });
 }
 
 export async function createProperty(
@@ -93,7 +117,7 @@ export async function createProperty(
     }
     generationId = generation.id;
 
-    const result = await analyzeProperty({
+    const result = await runAnalysis({
       propertyName: name,
       memo,
       floorPlan: floorPlan.input,
@@ -155,7 +179,10 @@ export async function regenerateProposals(
     .eq("company_id", company.id)
     .single();
 
-  if (propertyError || !property || !property.floor_plan_url) {
+  if (!isDemoMode() && (propertyError || !property || !property.floor_plan_url)) {
+    return { status: "error", message: "物件情報を取得できませんでした" };
+  }
+  if (isDemoMode() && (propertyError || !property)) {
     return { status: "error", message: "物件情報を取得できませんでした" };
   }
 
@@ -165,16 +192,16 @@ export async function regenerateProposals(
     .eq("property_id", propertyId)
     .order("sort_order");
 
-  if (!photoRows || photoRows.length === 0) {
+  if (!isDemoMode() && (!photoRows || photoRows.length === 0)) {
     return { status: "error", message: "空室写真が見つかりませんでした" };
   }
 
   await supabase.from("properties").update({ status: "processing", status_error: null }).eq("id", propertyId);
 
-  const admin = (await import("@/lib/supabase/admin")).createAdminClient();
-  const { PROPERTY_MEDIA_BUCKET } = await import("@/lib/supabase/storage");
-
   async function downloadAsImageInput(path: string): Promise<ImageInput> {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const { PROPERTY_MEDIA_BUCKET } = await import("@/lib/supabase/storage");
+    const admin = createAdminClient();
     const { data, error } = await admin.storage.from(PROPERTY_MEDIA_BUCKET).download(path);
     if (error || !data) throw new Error(`画像の取得に失敗しました: ${path}`);
     const bytes = new Uint8Array(await data.arrayBuffer());
@@ -186,8 +213,12 @@ export async function regenerateProposals(
   let generationId: string | null = null;
 
   try {
-    const floorPlan = await downloadAsImageInput(property.floor_plan_url);
-    const photos = await Promise.all(photoRows.map((row) => downloadAsImageInput(row.url)));
+    let floorPlan: ImageInput | undefined;
+    let photos: ImageInput[] | undefined;
+    if (!isDemoMode()) {
+      floorPlan = await downloadAsImageInput(property!.floor_plan_url!);
+      photos = await Promise.all((photoRows ?? []).map((row) => downloadAsImageInput(row.url)));
+    }
 
     const { data: generation, error: generationError } = await supabase
       .from("generations")
@@ -197,9 +228,9 @@ export async function regenerateProposals(
     if (generationError || !generation) throw new Error(generationError?.message ?? "生成記録の作成に失敗しました");
     generationId = generation.id;
 
-    const result = await analyzeProperty({
-      propertyName: property.name,
-      memo: property.memo,
+    const result = await runAnalysis({
+      propertyName: property!.name,
+      memo: property!.memo,
       floorPlan,
       photos,
     });
@@ -240,5 +271,3 @@ export async function regenerateProposals(
   revalidatePath(`/properties/${propertyId}`);
   return { status: "success", message: "新しい提案を生成しました" };
 }
-
-export { idlePropertyState };

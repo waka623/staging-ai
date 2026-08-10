@@ -1,9 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isDemoMode } from "@/lib/demo/mode";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/s"];
 
 export async function proxy(request: NextRequest) {
+  // Demo mode has no real Supabase session to check — every route is
+  // reachable so the dashboard can be opened directly.
+  if (isDemoMode()) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

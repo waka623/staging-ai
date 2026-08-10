@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isDemoMode } from "@/lib/demo/mode";
+import { getDemoStore } from "@/lib/demo/store";
 import type { Company } from "@/types/database";
 
 /**
@@ -11,6 +13,11 @@ export async function requireCurrentCompany(): Promise<{
   userId: string;
   company: Company;
 }> {
+  if (isDemoMode()) {
+    const company = getDemoStore().companies[0];
+    return { userId: company.owner_id, company };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
