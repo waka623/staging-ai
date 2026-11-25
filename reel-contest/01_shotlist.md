@@ -1,0 +1,55 @@
+# ショットリスト v1（「もしも、他人の評価が見えたら。」）
+
+## 共通ルール
+- 縦型9:16。生成は通常の色で行い、色の変化は編集で付ける
+- **頭上の数字・テロップ・通知音は、すべて編集で後から重ねる**（AIに数字を描かせると、桁が崩れたりカットごとに形がずれたりしやすいため）。生成プロンプトには数字を入れない
+- 主人公の外見は下の「CHAR」を毎回そのまま使う。各カットは「最初のフレーム画像（gpt_image_2_6）→ 動画化（Kling v3.0 std・音なし・5秒）」の順で作る
+- 使うのは5秒のうち必要な秒数だけ（3秒未満のカットも5秒で生成して切る）
+
+## CHAR（主人公の固定設定）
+```
+a 20-year-old Japanese male university student, slim build, short black hair with soft bangs,
+natural skin, no glasses, wearing a plain heather-gray crewneck sweatshirt and beige chinos,
+white sneakers, black canvas tote bag
+```
+STYLE（全カット共通）：
+```
+photorealistic, shot on 35mm, natural daylight, shallow depth of field, Japanese university campus,
+vertical 9:16, cinematic, no text, no numbers, no logos
+```
+
+## カット一覧
+| # | 秒 | 映像（AIで生成） | 編集で足すもの |
+|---|---|---|---|
+| C01 | 0-3 | 主人公がキャンパスを歩いていると、周りの学生が一斉に振り向く | 頭上「0」／テロップ「もしも、他人の評価が見えたら。」／ピコン |
+| C02 | 3-5 | 引きの画で、キャンパスの広場に大勢の学生 | 全員の頭上に数字 |
+| C03 | 5-10 | トイレか更衣室の鏡の前で、流行りの服（黒のオーバーサイズジャケット）に着替える | 12→500 |
+| C04 | 10-15 | 友人の輪の中で、周りに合わせて笑う | 通知音の連打／→2,000 |
+| C05 | 15-20 | カフェでラテをスマホで撮る | 数字が紙吹雪のように舞う／→9,800 |
+| C06 | 20-25 | ベンチでスケッチブックを出しかけて、慌てて鞄に戻す | 数字が赤く点滅 |
+| C07 | 25-30 | 鏡に映った自分の顔がぼやけている | ※顔のぼかしは編集で付けてもよい |
+| C08 | 30-35 | 下から見上げる構図で、周りの学生が主人公を見下ろす | 数字が迫ってくる |
+| C09 | 35-40 | 頭の上を手で振り払おうとする | 数字が消えない／BGMが歪む |
+| C10 | 40-45 | 公園で、子どもが泥遊びをしている | 無音にして子どもの笑い声だけ |
+| C11 | 45-50 | 泥だらけのボールが転がってきて、主人公が受け取る | ― |
+| C12 | 50-55 | 主人公が素で笑う（アップ） | 数字が初めて消える |
+| C13 | 55-60 | **要検討**：視聴者の頭上に数字を出す見せ方 | テロップ「その数字、誰のため？」／ピコン |
+
+## 動画化プロンプト（Kling用・最初のフレーム画像と組み合わせる）
+- C01: `[CHAR] walks across the campus plaza; several students around him suddenly stop and turn their heads toward him at the same time; slow push-in, [STYLE]`
+- C02: `wide high-angle shot of a crowded Japanese university plaza, many students walking and chatting, gentle drone drift, [STYLE]`
+- C03: `[CHAR] in front of a mirror puts on a trendy oversized black jacket and checks himself, satisfied smile, [STYLE]`
+- C04: `[CHAR] stands in a circle of friends who are laughing; he laughs along a beat late, slightly forced, handheld, [STYLE]`
+- C05: `[CHAR] in a stylish cafe holds up his smartphone to photograph a latte art cup, carefully adjusting the angle, [STYLE]`
+- C06: `[CHAR] sits on a bench and starts pulling a sketchbook out of his tote bag, then glances around nervously and quickly pushes it back in, [STYLE]`
+- C07: `close-up of a restroom mirror reflection of [CHAR]; the reflection is out of focus and blurry while the mirror frame is sharp, still and quiet, [STYLE]`
+- C08: `low-angle shot from below, [CHAR] small in the center; surrounding students standing over him look down at him with blank faces, slow rotation, [STYLE]`
+- C09: `[CHAR] frantically swats at the empty air above his own head with both hands, frustrated, handheld, [STYLE]`
+- C10: `in a sunny neighborhood park, a 5-year-old Japanese child happily plays in a mud puddle, laughing freely, warm natural light, [STYLE]`
+- C11: `a muddy ball rolls across the ground and [CHAR] instinctively catches it, his hands getting dirty, he looks at it surprised, [STYLE]`
+- C12: `close-up of [CHAR] holding a muddy ball, he breaks into a genuine unguarded smile, soft warm light, [STYLE]`
+
+## 費用の見込み（2026-11-25時点の見積もり）
+- 最初のフレーム画像：0.75クレジット/枚 × 13カット × 2回 ≒ 20クレジット
+- 動画：7.5クレジット/本 × 12カット × 2.5回 ≒ 225クレジット
+- 合計 約245クレジット（現在の残高10クレジット）
