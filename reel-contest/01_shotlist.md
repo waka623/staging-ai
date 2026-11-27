@@ -16,6 +16,8 @@
 - 生成：画像も動画も、主催者の回答を待たずにClaudeが生成してよい（応募資格のリスクは本人が負う）
 - 主人公の基準画像は4案から選ぶ。動画用のクレジットは、画像が固まってから決める
 
+- 2026-11-27：映像のトーンを**実写風からアニメ風**に変更（Google Vidsで制作）。実写風の基準画像・C01の最初のフレームは使わない
+
 ## CHAR（主人公の固定設定）
 ```
 a 20-year-old Japanese male university student, slim build, friendly and approachable face,
