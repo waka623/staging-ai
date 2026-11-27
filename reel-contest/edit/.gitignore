@@ -1,0 +1,7 @@
+# 書き出し結果・仮素材・生成クリップは容量が大きいためgitに入れない
+out/
+placeholder/
+clips/*
+!clips/.gitkeep
+audio/*
+!audio/.gitkeep
